@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Change the parent theme to be compatible with Material Components -->
+    <style name="Theme.ArgusApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Основные цвета темы -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <!-- Дополнительные настройки темы -->
+        <item name="android:windowBackground">@color/windowBackground</item>
+    </style>
+
+    <!-- Keep your other styles as they are -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
+
+    <style name="Widget.MaterialComponents.Chip.Info" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">#E0F7FA</item>
+        <item name="android:textColor">#01579B</item>
+        <item name="chipStrokeColor">#B3E5FC</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipMinHeight">24dp</item>
+        <item name="chipMinTouchTargetSize">24dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
+    </style>
+
+    <style name="RoundedDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_rounded_background</item>
+    </style>
+</resources>

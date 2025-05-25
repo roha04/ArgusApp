@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ArgusApp</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Image handling related strings -->
+    <string name="image_preview">Перегляд зображення</string>
+    <string name="remove_image">Видалити зображення</string>
+</resources>
