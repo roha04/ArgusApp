@@ -20,6 +20,7 @@ class UsersFragment : Fragment() {
     private lateinit var usersAdapter: UsersAdapter
     private lateinit var db: FirebaseFirestore
     private var currentFilter: String = "all"
+    private var usersList: List<User> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,7 +37,6 @@ class UsersFragment : Fragment() {
         db = FirebaseFirestore.getInstance()
 
         setupRecyclerView()
-        setupChipGroupListeners()
         loadUsers()
     }
 
@@ -53,25 +53,6 @@ class UsersFragment : Fragment() {
         }
     }
 
-    private fun setupChipGroupListeners() {
-        binding.chipAll.setOnClickListener {
-            currentFilter = "all"
-            loadUsers()
-        }
-        binding.chipAdmins.setOnClickListener {
-            currentFilter = "admin"
-            loadUsers()
-        }
-        binding.chipPolice.setOnClickListener {
-            currentFilter = "police"
-            loadUsers()
-        }
-        binding.chipCitizens.setOnClickListener {
-            currentFilter = "citizen"
-            loadUsers()
-        }
-    }
-
     private fun loadUsers() {
         showLoading(true)
 
@@ -84,7 +65,7 @@ class UsersFragment : Fragment() {
             .addOnSuccessListener { documents ->
                 showLoading(false)
 
-                val users = documents.mapNotNull { doc ->
+                usersList = documents.mapNotNull { doc ->
                     try {
                         val user = doc.toObject(User::class.java)
                         user.id = doc.id
@@ -94,7 +75,7 @@ class UsersFragment : Fragment() {
                     }
                 }
 
-                updateUI(users)
+                updateUI(usersList)
             }
             .addOnFailureListener { e ->
                 showLoading(false)
@@ -119,6 +100,32 @@ class UsersFragment : Fragment() {
 
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Method to filter users by role from the activity
+     * This will be called from the AdminMainActivity when the filter button is clicked
+     */
+    fun filterByRole(role: String?) {
+        currentFilter = when (role) {
+            null, "all" -> "all"
+            "admin" -> "admin"
+            "police" -> "police"
+            "citizen", "user" -> "citizen"
+            else -> "all"
+        }
+
+        // If we already have users loaded, we can filter them in memory
+        if (usersList.isNotEmpty() && currentFilter != "all") {
+            val filteredUsers = usersList.filter { it.role == currentFilter }
+            updateUI(filteredUsers)
+        } else if (usersList.isNotEmpty() && currentFilter == "all") {
+            // Show all users
+            updateUI(usersList)
+        } else {
+            // Otherwise load from database
+            loadUsers()
+        }
     }
 
     override fun onDestroyView() {
