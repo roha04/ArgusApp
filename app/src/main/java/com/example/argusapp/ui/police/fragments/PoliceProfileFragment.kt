@@ -48,7 +48,7 @@ class PoliceProfileFragment : Fragment() {
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
-                        binding.tvName.text = document.getString("name") ?: "Не вказано"
+                        binding.tvName.text = document.getString("displayName") ?: "Не вказано"
                         binding.tvEmail.text = document.getString("email") ?: "Не вказано"
                         binding.tvPhone.text = document.getString("phone") ?: "Не вказано"
                         binding.tvRank.text = document.getString("rank") ?: "Не вказано"
