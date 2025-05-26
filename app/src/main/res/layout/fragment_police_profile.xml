@@ -23,7 +23,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Профіль адміністратора"
+                android:text="Профіль поліцейського"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
@@ -36,7 +36,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textViewName"
+                android:id="@+id/tvName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Завантаження..."
@@ -49,7 +49,7 @@
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textViewEmail"
+                android:id="@+id/tvEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Завантаження..."
@@ -58,11 +58,37 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Роль:"
+                android:text="Телефон:"
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/textViewRole"
+                android:id="@+id/tvPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Завантаження..."
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Звання:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvRank"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Завантаження..."
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Відділ:"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvDepartment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Завантаження..."
@@ -71,7 +97,7 @@
     </androidx.cardview.widget.CardView>
 
     <Button
-        android:id="@+id/buttonLogout"
+        android:id="@+id/btnLogout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Вийти з облікового запису"
