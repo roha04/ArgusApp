@@ -42,8 +42,11 @@ class PoliceMainActivity : AppCompatActivity() {
         setupViewPager()
 
         // Кнопка для перегляду карти правопорушень
+        // Кнопка для перегляду карти правопорушень
         binding.fabMapView.setOnClickListener {
-            startActivity(Intent(this, MapActivity::class.java))
+            val intent = Intent(this, MapActivity::class.java)
+            intent.putExtra("IS_POLICE_MODE", true)  // Add this line to pass the flag
+            startActivity(intent)
         }
         testReportsQuery()
 

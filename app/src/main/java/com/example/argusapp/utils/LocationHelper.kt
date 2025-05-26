@@ -30,9 +30,9 @@ class LocationHelper(private val context: Context) {
         try {
             Log.d("LocationHelper", "Getting location")
 
-            // Create location request
+            // Create location request with more lenient settings
             val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
-                .setWaitForAccurateLocation(true)
+                .setWaitForAccurateLocation(false) // Changed to false to be more lenient
                 .setMinUpdateIntervalMillis(5000)
                 .setMaxUpdates(1)
                 .build()
@@ -51,66 +51,67 @@ class LocationHelper(private val context: Context) {
                 }
             }
 
+            // Set timeout for location request
+            val handler = Handler(Looper.getMainLooper())
+            val timeoutRunnable = Runnable {
+                fusedLocationClient.removeLocationUpdates(locationCallback)
+                onError("Час очікування на отримання місцезнаходження вийшов")
+            }
+
             // First try last location
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location ->
-                    if (location != null) {
-                        Log.d("LocationHelper", "Using last location")
-                        onSuccess(location)
-                    } else {
-                        // Request fresh location
-                        Log.d("LocationHelper", "Requesting fresh location")
-                        fusedLocationClient.requestLocationUpdates(
-                            locationRequest,
-                            locationCallback,
-                            Looper.getMainLooper()
-                        )
+            try {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            Log.d("LocationHelper", "Using last location")
+                            handler.removeCallbacks(timeoutRunnable) // Remove timeout if we got a location
+                            onSuccess(location)
+                        } else {
+                            // Request fresh location
+                            Log.d("LocationHelper", "Requesting fresh location")
+                            try {
+                                fusedLocationClient.requestLocationUpdates(
+                                    locationRequest,
+                                    locationCallback,
+                                    Looper.getMainLooper()
+                                )
+
+                                // Set timeout for 15 seconds
+                                handler.postDelayed(timeoutRunnable, 15000)
+                            } catch (e: Exception) {
+                                Log.e("LocationHelper", "Error requesting location updates: ${e.message}")
+                                onError("Помилка запиту місцезнаходження: ${e.message}")
+                            }
+                        }
                     }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("LocationHelper", "Error: ${e.message}")
-                    onError("Помилка: ${e.message}")
-                }
+                    .addOnFailureListener { e ->
+                        Log.e("LocationHelper", "Error getting last location: ${e.message}")
+
+                        // Try requesting fresh location as fallback
+                        try {
+                            fusedLocationClient.requestLocationUpdates(
+                                locationRequest,
+                                locationCallback,
+                                Looper.getMainLooper()
+                            )
+
+                            // Set timeout for 15 seconds
+                            handler.postDelayed(timeoutRunnable, 15000)
+                        } catch (e2: Exception) {
+                            Log.e("LocationHelper", "Error requesting location updates: ${e2.message}")
+                            onError("Помилка запиту місцезнаходження: ${e2.message}")
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e("LocationHelper", "Exception getting last location: ${e.message}")
+                onError("Помилка: ${e.message}")
+            }
 
         } catch (e: Exception) {
-            Log.e("LocationHelper", "Exception: ${e.message}")
+            Log.e("LocationHelper", "Exception in getCurrentLocation: ${e.message}")
             onError("Exception: ${e.message}")
         }
     }
-//    fun getAddressFromLocation(
-//        latitude: Double,
-//        longitude: Double,
-//        onSuccess: (String) -> Unit,
-//        onError: (String) -> Unit
-//    ) {
-//        try {
-//            val geocoder = Geocoder(context, Locale.getDefault())
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                // Android 13 і вище
-//                geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
-//                    if (addresses.isNotEmpty()) {
-//                        val address = formatAddress(addresses.first())
-//                        onSuccess(address)
-//                    } else {
-//                        onError("Не вдалося визначити адресу")
-//                    }
-//                }
-//            } else {
-//                // Android 12 і нижче
-//                @Suppress("DEPRECATION")
-//                val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-//                if (!addresses.isNullOrEmpty()) {
-//                    val address = formatAddress(addresses.first())
-//                    onSuccess(address)
-//                } else {
-//                    onError("Не вдалося визначити адресу")
-//                }
-//            }
-//        } catch (e: Exception) {
-//            onError("Помилка при визначенні адреси: ${e.message}")
-//        }
-//    }
 fun getAddressFromLocation(
     latitude: Double,
     longitude: Double,
