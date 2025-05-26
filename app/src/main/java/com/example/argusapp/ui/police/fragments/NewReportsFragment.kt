@@ -2,6 +2,7 @@ package com.example.argusapp.ui.police.fragments
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ import com.example.argusapp.databinding.FragmentReportListBinding
 import com.example.argusapp.data.model.Report
 import com.example.argusapp.ui.police.PoliceReportDetailActivity
 import com.example.argusapp.ui.police.adapters.PoliceReportsAdapter
+import com.google.firebase.auth.FirebaseAuth
 
 class NewReportsFragment : Fragment() {
 
@@ -59,8 +61,13 @@ class NewReportsFragment : Fragment() {
     private fun loadReports() {
         showLoading(true)
 
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        Log.d("PoliceDebug", "Current user ID: $currentUserId")
+        Log.d("PoliceDebug", "Looking for reports with assignedToId: $currentUserId")
+
         db.collection("reports")
             .whereEqualTo("status", "new")
+            .whereEqualTo("assignedToId", currentUserId) // Add this line
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->

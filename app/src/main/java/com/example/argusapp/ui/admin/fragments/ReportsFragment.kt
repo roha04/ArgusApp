@@ -1,6 +1,5 @@
 package com.example.argusapp.ui.admin.fragments
 
-
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -79,6 +78,9 @@ class ReportsFragment : Fragment() {
     }
 
     private fun loadReports() {
+        // Check if fragment is still attached
+        if (!isAdded) return
+
         showLoading(true)
 
         val query = when (currentFilter) {
@@ -89,6 +91,9 @@ class ReportsFragment : Fragment() {
 
         query.get()
             .addOnSuccessListener { documents ->
+                // Check if binding is still valid
+                if (_binding == null) return@addOnSuccessListener
+
                 showLoading(false)
 
                 val reports = documents.mapNotNull { doc ->
@@ -104,12 +109,18 @@ class ReportsFragment : Fragment() {
                 updateUI(reports)
             }
             .addOnFailureListener { e ->
+                // Check if binding is still valid
+                if (_binding == null) return@addOnFailureListener
+
                 showLoading(false)
                 showError("Помилка отримання даних: ${e.message}")
             }
     }
 
     private fun updateUI(reports: List<Report>) {
+        // Check if binding is still valid
+        if (_binding == null) return
+
         if (reports.isEmpty()) {
             binding.textViewEmpty.visibility = View.VISIBLE
             binding.recyclerViewReports.visibility = View.GONE
@@ -121,10 +132,16 @@ class ReportsFragment : Fragment() {
     }
 
     private fun showLoading(isLoading: Boolean) {
+        // Check if binding is still valid
+        if (_binding == null) return
+
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
     private fun showError(message: String) {
+        // Check if fragment is still attached
+        if (!isAdded) return
+
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 

@@ -14,6 +14,7 @@ import com.example.argusapp.databinding.FragmentReportListBinding
 import com.example.argusapp.data.model.Report
 import com.example.argusapp.ui.police.PoliceReportDetailActivity
 import com.example.argusapp.ui.police.adapters.PoliceReportsAdapter
+import com.google.firebase.auth.FirebaseAuth
 
 class InProgressReportsFragment : Fragment() {
 
@@ -58,8 +59,12 @@ class InProgressReportsFragment : Fragment() {
     private fun loadReports() {
         showLoading(true)
 
+        // Get current user ID
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
         db.collection("reports")
             .whereEqualTo("status", "in_progress")
+            .whereEqualTo("assignedToId", currentUserId) // Add this line
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->

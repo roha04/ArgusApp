@@ -2,6 +2,7 @@ package com.example.argusapp.ui.admin
 
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
@@ -264,45 +265,96 @@ class AdminReportDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun assignOfficerToReport(officer: User) {
-        val report = currentReport ?: return
-        val user = currentUser ?: return
+//    private fun assignOfficerToReport(officer: User) {
+//        val report = currentReport ?: return
+//        val user = currentUser ?: return
+//
+//        val reportRef = db.collection("reports").document(reportId)
+//
+//        // Оновлення звіту з інформацією про призначеного офіцера
+//        val updates = hashMapOf<String, Any>(
+//            "assignedToId" to officer.id,
+//            "assignedAt" to Timestamp.now(),
+//            "isAssigned" to true,
+//            "updatedAt" to Timestamp.now()
+//        )
+//
+//        reportRef.update(updates)
+//            .addOnSuccessListener {
+//                // Створення запису про оновлення
+//                val update = ReportUpdateHelper.createAssignmentUpdate(
+//                    reportId = reportId,
+//                    user = user,
+//                    assignedTo = officer
+//                )
+//
+//                db.collection("report_updates").add(update)
+//                    .addOnSuccessListener {
+//                        Toast.makeText(
+//                            this,
+//                            "Офіцера ${officer.displayName} призначено до заявки",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//
+//                        // Оновлення даних
+//                        loadReportData()
+//                    }
+//            }
+//            .addOnFailureListener { e ->
+//                Toast.makeText(this, "Помилка: ${e.message}", Toast.LENGTH_SHORT).show()
+//            }
+//    }
+private fun assignOfficerToReport(officer: User) {
+    val report = currentReport ?: return
+    val user = currentUser ?: return
 
-        val reportRef = db.collection("reports").document(reportId)
+    val reportRef = db.collection("reports").document(reportId)
 
-        // Оновлення звіту з інформацією про призначеного офіцера
-        val updates = hashMapOf<String, Any>(
-            "assignedToId" to officer.id,
-            "assignedAt" to Timestamp.now(),
-            "isAssigned" to true,
-            "updatedAt" to Timestamp.now()
-        )
+    // Debug: Log the officer ID being assigned
+    Log.d("AdminReport", "Assigning officer ID: ${officer.id} to report: $reportId")
 
-        reportRef.update(updates)
-            .addOnSuccessListener {
-                // Створення запису про оновлення
-                val update = ReportUpdateHelper.createAssignmentUpdate(
-                    reportId = reportId,
-                    user = user,
-                    assignedTo = officer
-                )
+    // Оновлення звіту з інформацією про призначеного офіцера
+    val updates = hashMapOf<String, Any>(
+        "assignedToId" to officer.id,
+        "assignedAt" to Timestamp.now(),
+        "isAssigned" to true,
+        "updatedAt" to Timestamp.now()
+    )
 
-                db.collection("report_updates").add(update)
-                    .addOnSuccessListener {
-                        Toast.makeText(
-                            this,
-                            "Офіцера ${officer.displayName} призначено до заявки",
-                            Toast.LENGTH_SHORT
-                        ).show()
+    reportRef.update(updates)
+        .addOnSuccessListener {
+            Log.d("AdminReport", "Successfully updated report with officer assignment")
 
-                        // Оновлення даних
-                        loadReportData()
-                    }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Помилка: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
+            // Створення запису про оновлення
+            val update = ReportUpdateHelper.createAssignmentUpdate(
+                reportId = reportId,
+                user = user,
+                assignedTo = officer
+            )
+
+            db.collection("report_updates").add(update)
+                .addOnSuccessListener {
+                    Log.d("AdminReport", "Created assignment update record")
+
+                    Toast.makeText(
+                        this,
+                        "Офіцера ${officer.displayName} призначено до заявки",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Оновлення даних
+                    loadReportData()
+                }
+                .addOnFailureListener { e ->
+                    Log.e("AdminReport", "Failed to create update record: ${e.message}")
+                    Toast.makeText(this, "Помилка при створенні запису оновлення: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+        .addOnFailureListener { e ->
+            Log.e("AdminReport", "Failed to assign officer: ${e.message}")
+            Toast.makeText(this, "Помилка: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+}
 
     private fun updateReportStatus(newStatus: String) {
         val report = currentReport ?: return

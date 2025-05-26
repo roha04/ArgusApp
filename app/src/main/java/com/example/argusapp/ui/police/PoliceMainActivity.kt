@@ -18,6 +18,10 @@ import com.example.argusapp.ui.common.MapActivity
 import com.example.argusapp.ui.police.fragments.CompletedReportsFragment
 import com.example.argusapp.ui.police.fragments.InProgressReportsFragment
 import com.example.argusapp.ui.police.fragments.NewReportsFragment
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
+
+
 
 class PoliceMainActivity : AppCompatActivity() {
 
@@ -41,6 +45,8 @@ class PoliceMainActivity : AppCompatActivity() {
         binding.fabMapView.setOnClickListener {
             startActivity(Intent(this, MapActivity::class.java))
         }
+        testReportsQuery()
+
     }
 
     private fun setupViewPager() {
@@ -89,5 +95,28 @@ class PoliceMainActivity : AppCompatActivity() {
                 else -> NewReportsFragment()
             }
         }
+    }
+    private fun testReportsQuery() {
+        val db = FirebaseFirestore.getInstance()
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        Log.d("PoliceDebug", "Testing direct query for user: $currentUserId")
+
+        db.collection("reports")
+            .whereEqualTo("assignedToId", currentUserId)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("PoliceDebug", "Direct query found ${documents.size()} documents")
+
+                for (doc in documents) {
+                    Log.d("PoliceDebug", "Document ID: ${doc.id}")
+                    Log.d("PoliceDebug", "Title: ${doc.getString("title")}")
+                    Log.d("PoliceDebug", "Status: ${doc.getString("status")}")
+                    Log.d("PoliceDebug", "AssignedToId: ${doc.getString("assignedToId")}")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("PoliceDebug", "Direct query failed: ${e.message}")
+            }
     }
 }
