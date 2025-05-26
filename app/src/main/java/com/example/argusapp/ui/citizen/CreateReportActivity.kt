@@ -4,8 +4,12 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
@@ -29,6 +33,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.storageMetadata
+import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 class CreateReportActivity : AppCompatActivity() {
@@ -283,29 +289,192 @@ class CreateReportActivity : AppCompatActivity() {
 
     private fun uploadImages(onComplete: (List<String>) -> Unit) {
         val imageUrls = mutableListOf<String>()
-        var uploadedCount = 0
+        val failedUploads = mutableListOf<Int>()
+        var completedCount = 0
+        val totalImages = selectedImages.size
+
+        if (selectedImages.isEmpty()) {
+            onComplete(emptyList())
+            return
+        }
+
+        // Check total size before uploading
+        if (!validateImagesSize()) {
+            showLoading(false)
+            return
+        }
+
+        // Show progress information
+        binding.textViewProgress.visibility = View.VISIBLE
+        binding.textViewProgress.text = "Завантаження зображень (0/$totalImages)"
 
         selectedImages.forEachIndexed { index, uri ->
-            val imageName = "report_image_${UUID.randomUUID()}.jpg"
-            val imageRef = storage.reference.child("report_images/$imageName")
+            try {
+                // Create a unique filename with timestamp and index
+                val timestamp = System.currentTimeMillis()
+                val imageName = "report_${timestamp}_${index}_${UUID.randomUUID()}.jpg"
+                val imageRef = storage.reference.child("report_images/$imageName")
 
-            imageRef.putFile(uri)
-                .addOnSuccessListener {
+                // Compress and resize the image
+                val inputStream = contentResolver.openInputStream(uri)
+                val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+
+                // Skip if bitmap couldn't be created
+                if (originalBitmap == null) {
+                    failedUploads.add(index)
+                    completedCount++
+                    checkUploadCompletion(completedCount, totalImages, imageUrls, failedUploads, onComplete)
+                    return@forEachIndexed
+                }
+
+                // Resize if necessary
+                val maxDimension = 1200 // Maximum width or height
+                val scaledBitmap = if (originalBitmap.width > maxDimension || originalBitmap.height > maxDimension) {
+                    val scale = maxDimension.toFloat() / maxOf(originalBitmap.width, originalBitmap.height)
+                    Bitmap.createScaledBitmap(
+                        originalBitmap,
+                        (originalBitmap.width * scale).toInt(),
+                        (originalBitmap.height * scale).toInt(),
+                        true
+                    )
+                } else {
+                    originalBitmap
+                }
+
+                // Compress to JPEG
+                val baos = ByteArrayOutputStream()
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                val compressedData = baos.toByteArray()
+
+                // Add metadata
+                val metadata = storageMetadata {
+                    contentType = "image/jpeg"
+                    setCustomMetadata("reportCreator", auth.currentUser?.uid ?: "")
+                    setCustomMetadata("createdAt", Timestamp.now().seconds.toString())
+                    setCustomMetadata("originalFilename", getFileName(uri) ?: "unknown")
+                }
+
+                // Upload the compressed image with metadata
+                val uploadTask = imageRef.putBytes(compressedData, metadata)
+
+                // Add progress listener
+                uploadTask.addOnProgressListener { taskSnapshot ->
+                    val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toInt()
+                    binding.textViewProgress.text = "Завантаження зображення ${index + 1}/$totalImages ($progress%)"
+                }
+
+                // Handle success
+                uploadTask.addOnSuccessListener {
+                    // Free memory
+                    if (originalBitmap != scaledBitmap) {
+                        scaledBitmap.recycle()
+                    }
+                    originalBitmap.recycle()
+
+                    // Get download URL
                     imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                         imageUrls.add(downloadUrl.toString())
-                        uploadedCount++
+                        completedCount++
 
-                        // Коли всі зображення завантажено, продовжуємо
-                        if (uploadedCount == selectedImages.size) {
-                            onComplete(imageUrls)
-                        }
+                        binding.textViewProgress.text = "Завантаження зображень ($completedCount/$totalImages)"
+                        checkUploadCompletion(completedCount, totalImages, imageUrls, failedUploads, onComplete)
+                    }.addOnFailureListener { e ->
+                        Log.e("UploadImages", "Failed to get download URL: ${e.message}")
+                        failedUploads.add(index)
+                        completedCount++
+                        checkUploadCompletion(completedCount, totalImages, imageUrls, failedUploads, onComplete)
+                    }
+                }.addOnFailureListener { e ->
+                    Log.e("UploadImages", "Failed to upload image $index: ${e.message}")
+                    failedUploads.add(index)
+                    completedCount++
+                    checkUploadCompletion(completedCount, totalImages, imageUrls, failedUploads, onComplete)
+                }
+            } catch (e: Exception) {
+                Log.e("UploadImages", "Exception processing image $index: ${e.message}")
+                failedUploads.add(index)
+                completedCount++
+                checkUploadCompletion(completedCount, totalImages, imageUrls, failedUploads, onComplete)
+            }
+        }
+    }
+
+    private fun checkUploadCompletion(
+        completedCount: Int,
+        totalCount: Int,
+        imageUrls: List<String>,
+        failedUploads: List<Int>,
+        onComplete: (List<String>) -> Unit
+    ) {
+        if (completedCount == totalCount) {
+            binding.textViewProgress.visibility = View.GONE
+
+            if (failedUploads.isNotEmpty()) {
+                val failureMessage = if (failedUploads.size == totalCount) {
+                    "Не вдалося завантажити жодне зображення"
+                } else {
+                    "Не вдалося завантажити ${failedUploads.size} з $totalCount зображень"
+                }
+                showMessage(failureMessage)
+            }
+
+            // Continue with available images
+            if (imageUrls.isNotEmpty()) {
+                onComplete(imageUrls)
+            } else {
+                showLoading(false)
+                showMessage("Не вдалося завантажити жодне зображення")
+            }
+        }
+    }
+
+    private fun validateImagesSize(): Boolean {
+        var totalSize = 0L
+
+        for (uri in selectedImages) {
+            try {
+                val fileDescriptor = contentResolver.openFileDescriptor(uri, "r")
+                val fileSize = fileDescriptor?.statSize ?: 0
+                totalSize += fileSize
+                fileDescriptor?.close()
+            } catch (e: Exception) {
+                Log.e("UploadImages", "Error checking file size: ${e.message}")
+            }
+        }
+
+        val maxSizeMB = 20
+        val maxSizeBytes = maxSizeMB * 1024 * 1024
+
+        if (totalSize > maxSizeBytes) {
+            showMessage("Загальний розмір зображень перевищує $maxSizeMB МБ")
+            return false
+        }
+
+        return true
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val columnIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (columnIndex != -1) {
+                        result = it.getString(columnIndex)
                     }
                 }
-                .addOnFailureListener { e ->
-                    showLoading(false)
-                    showMessage("Помилка завантаження зображення ${index + 1}: ${e.message}")
-                }
+            }
         }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/')
+            if (cut != -1) {
+                result = result?.substring(cut!! + 1)
+            }
+        }
+        return result
     }
 
     private fun createReport(imageUrls: List<String>) {
