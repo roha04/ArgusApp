@@ -12,6 +12,7 @@ import com.example.argusapp.data.model.Report
 import com.example.argusapp.databinding.ItemAdminReportBinding
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.argusapp.data.model.User
 
 class AdminReportsAdapter(private val onItemClick: (Report) -> Unit) :
     ListAdapter<Report, AdminReportsAdapter.ReportViewHolder>(ReportDiffCallback()) {

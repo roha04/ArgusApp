@@ -6,52 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".ui.admin.fragments.ReportsFragment">
 
+    <!-- Filter Button at the top -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReportFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Фільтр"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:icon="@drawable/ic_filter"
+        app:iconGravity="end"
+        app:iconPadding="8dp"
+        style="@style/Widget.MaterialComponents.Button"
+        android:backgroundTint="#3D5AFE"
+        android:textColor="@android:color/white"
+        app:iconTint="@android:color/white"
+        app:cornerRadius="20dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewReports"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:padding="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/chipGroupFilter"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroupFilter"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:singleSelection="true">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipAll"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Всі" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipNew"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Нові" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipInProgress"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="В обробці" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipResolved"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Вирішені" />
-    </com.google.android.material.chip.ChipGroup>
+        app:layout_constraintTop_toBottomOf="@+id/btnReportFilter"
+        android:layout_marginTop="8dp" />
 
     <ProgressBar
         android:id="@+id/progressBar"

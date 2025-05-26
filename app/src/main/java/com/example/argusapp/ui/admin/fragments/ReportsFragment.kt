@@ -5,9 +5,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.argusapp.R
 import com.example.argusapp.databinding.FragmentReportsBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -23,6 +25,7 @@ class ReportsFragment : Fragment() {
     private lateinit var reportsAdapter: AdminReportsAdapter
     private lateinit var db: FirebaseFirestore
     private var currentFilter: String = "all"
+    private var reportsList: List<Report> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,7 +42,7 @@ class ReportsFragment : Fragment() {
         db = FirebaseFirestore.getInstance()
 
         setupRecyclerView()
-        setupChipGroupListeners()
+        setupFilterButton()
         loadReports()
     }
 
@@ -58,21 +61,54 @@ class ReportsFragment : Fragment() {
         }
     }
 
-    private fun setupChipGroupListeners() {
-        binding.chipAll.setOnClickListener {
-            currentFilter = "all"
-            loadReports()
+    private fun setupFilterButton() {
+        binding.btnReportFilter.setOnClickListener { view ->
+            showFilterPopupMenu(view)
         }
-        binding.chipNew.setOnClickListener {
-            currentFilter = "new"
-            loadReports()
+    }
+
+    private fun showFilterPopupMenu(view: View) {
+        val popupMenu = PopupMenu(requireContext(), view)
+        popupMenu.menu.add(0, 0, 0, "Всі")
+        popupMenu.menu.add(0, 1, 0, "Нові")
+        popupMenu.menu.add(0, 2, 0, "В обробці")
+        popupMenu.menu.add(0, 3, 0, "Вирішені")
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                0 -> filterByStatus("all")
+                1 -> filterByStatus("new")
+                2 -> filterByStatus("in_progress")
+                3 -> filterByStatus("resolved")
+            }
+            true
         }
-        binding.chipInProgress.setOnClickListener {
-            currentFilter = "in_progress"
-            loadReports()
+
+        popupMenu.show()
+    }
+
+    private fun filterByStatus(status: String) {
+        currentFilter = status
+
+        // Update button text to show current filter
+        val filterText = when (status) {
+            "all" -> "Фільтр: Всі"
+            "new" -> "Фільтр: Нові"
+            "in_progress" -> "Фільтр: В обробці"
+            "resolved" -> "Фільтр: Вирішені"
+            else -> "Фільтр"
         }
-        binding.chipResolved.setOnClickListener {
-            currentFilter = "resolved"
+        binding.btnReportFilter.text = filterText
+
+        // If we already have reports loaded, we can filter them in memory
+        if (reportsList.isNotEmpty() && currentFilter != "all") {
+            val filteredReports = reportsList.filter { it.status == currentFilter }
+            updateUI(filteredReports)
+        } else if (reportsList.isNotEmpty() && currentFilter == "all") {
+            // Show all reports
+            updateUI(reportsList)
+        } else {
+            // Otherwise load from database
             loadReports()
         }
     }
@@ -96,7 +132,7 @@ class ReportsFragment : Fragment() {
 
                 showLoading(false)
 
-                val reports = documents.mapNotNull { doc ->
+                reportsList = documents.mapNotNull { doc ->
                     try {
                         val report = doc.toObject(Report::class.java)
                         report.id = doc.id
@@ -106,7 +142,7 @@ class ReportsFragment : Fragment() {
                     }
                 }
 
-                updateUI(reports)
+                updateUI(reportsList)
             }
             .addOnFailureListener { e ->
                 // Check if binding is still valid

@@ -265,45 +265,6 @@ class AdminReportDetailActivity : AppCompatActivity() {
         }
     }
 
-//    private fun assignOfficerToReport(officer: User) {
-//        val report = currentReport ?: return
-//        val user = currentUser ?: return
-//
-//        val reportRef = db.collection("reports").document(reportId)
-//
-//        // Оновлення звіту з інформацією про призначеного офіцера
-//        val updates = hashMapOf<String, Any>(
-//            "assignedToId" to officer.id,
-//            "assignedAt" to Timestamp.now(),
-//            "isAssigned" to true,
-//            "updatedAt" to Timestamp.now()
-//        )
-//
-//        reportRef.update(updates)
-//            .addOnSuccessListener {
-//                // Створення запису про оновлення
-//                val update = ReportUpdateHelper.createAssignmentUpdate(
-//                    reportId = reportId,
-//                    user = user,
-//                    assignedTo = officer
-//                )
-//
-//                db.collection("report_updates").add(update)
-//                    .addOnSuccessListener {
-//                        Toast.makeText(
-//                            this,
-//                            "Офіцера ${officer.displayName} призначено до заявки",
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//
-//                        // Оновлення даних
-//                        loadReportData()
-//                    }
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Помилка: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
 private fun assignOfficerToReport(officer: User) {
     val report = currentReport ?: return
     val user = currentUser ?: return
