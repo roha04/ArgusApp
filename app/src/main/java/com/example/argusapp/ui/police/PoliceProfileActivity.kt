@@ -53,31 +53,7 @@ class PoliceProfileActivity : AppCompatActivity() {
         }
     }
 
-//    private fun loadUserData() {
-//        val userId = auth.currentUser?.uid ?: return
-//
-//        binding.progressBar.visibility = View.VISIBLE
-//
-//        db.collection("users").document(userId)
-//            .get()
-//            .addOnSuccessListener { document ->
-//                binding.progressBar.visibility = View.GONE
-//
-//                if (document != null && document.exists()) {
-//                    val user = document.toObject(User::class.java)
-//                    user?.id = document.id
-//
-//                    displayUserData(user)
-//                } else {
-//                    Toast.makeText(this, "Користувача не знайдено", Toast.LENGTH_SHORT).show()
-//                    finish()
-//                }
-//            }
-//            .addOnFailureListener { e ->
-//                binding.progressBar.visibility = View.GONE
-//                Toast.makeText(this, "Помилка завантаження даних: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
+
 private fun loadUserData() {
     val userId = auth.currentUser?.uid ?: return
     val userEmail = auth.currentUser?.email ?: ""
