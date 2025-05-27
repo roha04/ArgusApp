@@ -85,8 +85,6 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.firebase.storage.ktx)
-    implementation(libs.play.services.location)
-    implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -102,6 +100,9 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("org.osmdroid:osmdroid-android:6.1.14")
+    implementation("com.google.android.gms:play-services-base:18.2.0")
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
 
 
 

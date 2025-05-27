@@ -1,29 +1,26 @@
 package com.example.argusapp.ui.citizen
 
-
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.fragment.app.Fragment
 import com.example.argusapp.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.example.argusapp.databinding.ActivityCitizenMainBinding
-import com.example.argusapp.data.model.Report
 import com.example.argusapp.ui.auth.LoginActivity
-import com.example.argusapp.ui.citizen.adapters.ReportsAdapter
+import com.example.argusapp.ui.citizen.fragments.CitizenReportsFragment
+import com.example.argusapp.ui.citizen.fragments.CitizenProfileFragment
+import com.example.argusapp.ui.citizen.fragments.SosFragment
+import com.google.firebase.auth.FirebaseAuth
 
 class CitizenMainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCitizenMainBinding
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
-    private lateinit var reportsAdapter: ReportsAdapter
+
+    // Reference to the reports fragment for FAB handling
+    private var reportsFragment: CitizenReportsFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,89 +28,72 @@ class CitizenMainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
 
         // Встановлення toolbar
         setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = "Мої заявки"
 
-        // Налаштування RecyclerView
-        setupRecyclerView()
+        // Налаштування BottomNavigationView
+        setupBottomNavigation()
 
         // Кнопка для створення нової заявки
         binding.fabAddReport.setOnClickListener {
-            startActivity(Intent(this, CreateReportActivity::class.java))
-        }
-
-        // Завантаження заявок користувача
-        loadReports()
-    }
-
-    private fun setupRecyclerView() {
-        reportsAdapter = ReportsAdapter { report ->
-            // Обробка кліку на заявці
-            val intent = Intent(this, ReportDetailsActivity::class.java)
-            intent.putExtra("REPORT_ID", report.id)
-            startActivity(intent)
-        }
-
-        binding.recyclerViewReports.apply {
-            layoutManager = LinearLayoutManager(this@CitizenMainActivity)
-            adapter = reportsAdapter
-            setHasFixedSize(true)
-        }
-    }
-
-    private fun loadReports() {
-        showLoading(true)
-
-        val userId = auth.currentUser?.uid
-        if (userId == null) {
-            showError("Помилка аутентифікації")
-            return
-        }
-
-        db.collection("reports")
-            .whereEqualTo("userId", userId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
-                showLoading(false)
-
-                if (e != null) {
-                    showError("Помилка отримання даних: ${e.message}")
-                    return@addSnapshotListener
-                }
-
-                val reports = snapshot?.documents?.mapNotNull { doc ->
-                    try {
-                        val report = doc.toObject(Report::class.java)
-                        report?.id = doc.id
-                        report
-                    } catch (e: Exception) {
-                        null
-                    }
-                } ?: emptyList()
-
-                updateUI(reports)
+            // If we're on the reports fragment, delegate the click
+            if (reportsFragment != null && reportsFragment?.isVisible == true) {
+                reportsFragment?.onAddReportClicked()
+            } else {
+                // Direct handling if fragment reference is not available
+                startActivity(Intent(this, CreateReportActivity::class.java))
             }
-    }
+        }
 
-    private fun updateUI(reports: List<Report>) {
-        if (reports.isEmpty()) {
-            binding.textViewEmpty.visibility = View.VISIBLE
-            binding.recyclerViewReports.visibility = View.GONE
-        } else {
-            binding.textViewEmpty.visibility = View.GONE
-            binding.recyclerViewReports.visibility = View.VISIBLE
-            reportsAdapter.submitList(reports)
+        // За замовчуванням показуємо фрагмент заявок
+        if (savedInstanceState == null) {
+            loadReportsFragment()
         }
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    private fun setupBottomNavigation() {
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_reports -> {
+                    supportActionBar?.title = "Мої заявки"
+                    binding.fabAddReport.show()
+                    loadReportsFragment()
+                    true
+                }
+                R.id.nav_sos -> {  // Changed from nav_map to nav_sos
+                    supportActionBar?.title = "SOS"
+                    binding.fabAddReport.hide()
+                    replaceFragment(SosFragment())  // Changed from MapFragment to SOSFragment
+                    reportsFragment = null
+                    true
+                }
+                R.id.nav_profile -> {
+                    supportActionBar?.title = "Профіль"
+                    binding.fabAddReport.hide()
+                    replaceFragment(CitizenProfileFragment())
+                    reportsFragment = null
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    private fun loadReportsFragment() {
+        // Create new instance if needed
+        if (reportsFragment == null) {
+            reportsFragment = CitizenReportsFragment()
+        }
+
+        replaceFragment(reportsFragment!!)
+    }
+
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -127,10 +107,6 @@ class CitizenMainActivity : AppCompatActivity() {
                 auth.signOut()
                 startActivity(Intent(this, LoginActivity::class.java))
                 finish()
-                true
-            }
-            R.id.action_profile -> {
-                startActivity(Intent(this, CitizenProfileActivity::class.java))
                 true
             }
             else -> super.onOptionsItemSelected(item)

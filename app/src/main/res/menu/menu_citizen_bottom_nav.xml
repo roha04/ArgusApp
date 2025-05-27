@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_reports"
+        android:icon="@drawable/ic_reports"
+        android:title="Заявки" />
+    <item
+        android:id="@+id/nav_sos"
+        android:icon="@drawable/ic_emergency"
+        android:title="SOS" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Профіль" />
+</menu>
