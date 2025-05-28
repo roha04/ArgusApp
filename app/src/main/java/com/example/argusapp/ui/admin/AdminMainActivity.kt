@@ -14,10 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.example.argusapp.R
 import com.example.argusapp.databinding.ActivityAdminMainBinding
-import com.example.argusapp.ui.admin.fragments.ProfileFragment
-import com.example.argusapp.ui.admin.fragments.ReportsFragment
-import com.example.argusapp.ui.admin.fragments.StatisticsFragment
-import com.example.argusapp.ui.admin.fragments.UsersFragment
+import com.example.argusapp.ui.admin.fragments.*
 import com.example.argusapp.ui.auth.LoginActivity
 
 class AdminMainActivity : AppCompatActivity() {
@@ -48,16 +45,19 @@ class AdminMainActivity : AppCompatActivity() {
         val viewPagerAdapter = ViewPagerAdapter(this)
         binding.viewPager.adapter = viewPagerAdapter
 
+        // Disable swiping if needed
+        // binding.viewPager.isUserInputEnabled = false
+
         // Handle page changes
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 // Update bottom navigation when page changes
                 binding.bottomNavigation.menu.getItem(position).isChecked = true
 
-                // Show/hide FAB based on selected tab
+                // Show/hide FAB based on selected tab (only on Users tab)
                 binding.fabAddPolice.visibility = if (position == 0) View.VISIBLE else View.GONE
 
-                // Show/hide filter button based on selected tab
+                // Show/hide filter button based on selected tab (only on Users tab)
                 binding.btnFilter.visibility = if (position == 0) View.VISIBLE else View.GONE
             }
         })
@@ -77,8 +77,12 @@ class AdminMainActivity : AppCompatActivity() {
                     binding.viewPager.currentItem = 2
                     true
                 }
-                R.id.nav_profile -> {
+                R.id.nav_activity_logs -> {
                     binding.viewPager.currentItem = 3
+                    true
+                }
+                R.id.nav_profile -> {
+                    binding.viewPager.currentItem = 4
                     true
                 }
                 else -> false
@@ -138,7 +142,7 @@ class AdminMainActivity : AppCompatActivity() {
     }
 
     private inner class ViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
-        override fun getItemCount(): Int = 4
+        override fun getItemCount(): Int = 5  // Updated to 5 fragments
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
@@ -149,7 +153,8 @@ class AdminMainActivity : AppCompatActivity() {
                 }
                 1 -> ReportsFragment()
                 2 -> StatisticsFragment()
-                3 -> ProfileFragment()
+                3 -> ActivityLogsFragment()  // Add the new fragment
+                4 -> ProfileFragment()
                 else -> UsersFragment()
             }
         }

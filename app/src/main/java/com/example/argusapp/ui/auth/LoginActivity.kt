@@ -20,6 +20,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.example.argusapp.R
+import com.example.argusapp.data.model.ActivityLog
 import com.example.argusapp.databinding.ActivityLoginBinding
 import com.example.argusapp.ui.admin.AdminMainActivity
 import com.example.argusapp.ui.citizen.CitizenMainActivity
@@ -165,7 +166,8 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
-                        checkUserRoleAndRedirect(user.uid)
+                        // Pass both userId and email to the function
+                        checkUserRoleAndRedirect(user.uid, email)
                     } else {
                         showProgressBar(false)
                         showError("Помилка автентифікації")
@@ -177,16 +179,63 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+
     /**
      * Checks user role in Firestore and redirects to appropriate activity
      */
-    private fun checkUserRoleAndRedirect(userId: String) {
+//    private fun checkUserRoleAndRedirect(userId: String) {
+//        db.collection("users").document(userId).get()
+//            .addOnSuccessListener { document ->
+//                showProgressBar(false)
+//
+//                if (document != null && document.exists()) {
+//                    val role = document.getString("role") ?: "citizen"
+//
+//                    // Create intent based on user role
+//                    val intent = when (role) {
+//                        "admin" -> Intent(this, AdminMainActivity::class.java)
+//                        "police" -> Intent(this, PoliceMainActivity::class.java)
+//                        else -> Intent(this, CitizenMainActivity::class.java)
+//                    }
+//
+//                    // Add flags to clear back stack
+//                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//
+//                    startActivity(intent)
+//
+//                    // Optional: Add transition animation
+//                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+//
+//                    finish()
+//                } else {
+//                    // Document doesn't exist
+//                    showError("Профіль користувача не знайдено")
+//                    auth.signOut()
+//                }
+//            }
+//            .addOnFailureListener { e ->
+//                showProgressBar(false)
+//                showError("Помилка: ${e.localizedMessage}")
+//            }
+//    }
+    // ui/auth/LoginActivity.kt
+// Update your checkUserRoleAndRedirect function
+
+    private fun checkUserRoleAndRedirect(userId: String, email: String) {
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 showProgressBar(false)
 
                 if (document != null && document.exists()) {
                     val role = document.getString("role") ?: "citizen"
+
+                    // Log the login activity
+                    ActivityLog.logActivity(
+                        userId = userId,
+                        userEmail = email,
+                        userType = role,
+                        action = "Вхід в систему"
+                    )
 
                     // Create intent based on user role
                     val intent = when (role) {

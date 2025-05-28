@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.androidx.swiperefreshlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

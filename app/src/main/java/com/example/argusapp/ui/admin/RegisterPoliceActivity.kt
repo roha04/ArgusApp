@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.argusapp.data.model.ActivityLog
 import com.example.argusapp.databinding.ActivityRegisterPoliceBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -144,68 +145,85 @@ class RegisterPoliceActivity : AppCompatActivity() {
 //                ).show()
 //            }
 //    }
-private fun registerPoliceOfficer() {
-    val name = binding.editTextName.text.toString().trim()
-    val email = binding.editTextEmail.text.toString().trim()
-    val password = binding.editTextPassword.text.toString().trim()
-    val badgeNumber = binding.editTextBadgeNumber?.text?.toString()?.trim() ?: ""
-    val department = binding.editTextDepartment?.text?.toString()?.trim() ?: ""
+// ui/admin/RegisterPoliceActivity.kt
+// Update your registerPoliceOfficer function
 
-    setLoading(true)
+    private fun registerPoliceOfficer() {
+        val name = binding.editTextName.text.toString().trim()
+        val email = binding.editTextEmail.text.toString().trim()
+        val password = binding.editTextPassword.text.toString().trim()
+        val badgeNumber = binding.editTextBadgeNumber?.text?.toString()?.trim() ?: ""
+        val department = binding.editTextDepartment?.text?.toString()?.trim() ?: ""
+        val phoneNumber = binding.editTextPhone?.text?.toString()?.trim() ?: ""
 
-    // FIXED APPROACH: Create Auth user first, then use its UID for Firestore
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnSuccessListener { authResult ->
-            val newUser = authResult.user
+        setLoading(true)
 
-            if (newUser != null) {
-                // Use the Auth UID for the Firestore document
-                val userMap = hashMapOf(
-                    "displayName" to name,
-                    "email" to email,
-                    "role" to "police",
-                    "createdAt" to com.google.firebase.Timestamp.now()
-                )
+        // FIXED APPROACH: Create Auth user first, then use its UID for Firestore
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val newUser = authResult.user
 
-                if (badgeNumber.isNotEmpty()) userMap["badgeNumber"] = badgeNumber
-                if (department.isNotEmpty()) userMap["department"] = department
+                if (newUser != null) {
+                    // Use the Auth UID for the Firestore document
+                    val userMap = hashMapOf(
+                        "displayName" to name,
+                        "email" to email,
+                        "role" to "police",
+                        "createdAt" to com.google.firebase.Timestamp.now()
+                    )
 
-                // Create Firestore document with the SAME UID as the auth user
-                db.collection("users").document(newUser.uid)
-                    .set(userMap)
-                    .addOnSuccessListener {
-                        // Successfully created both
-                        setLoading(false)
-                        Toast.makeText(
-                            this,
-                            "Поліцейський $name успішно зареєстрований",
-                            Toast.LENGTH_LONG
-                        ).show()
+                    if (badgeNumber.isNotEmpty()) userMap["badgeNumber"] = badgeNumber
+                    if (department.isNotEmpty()) userMap["department"] = department
+                    if (phoneNumber.isNotEmpty()) userMap["phone"] = phoneNumber
 
-                        // Re-authenticate as admin before leaving
-                        auth.signOut()
+                    // Create Firestore document with the SAME UID as the auth user
+                    db.collection("users").document(newUser.uid)
+                        .set(userMap)
+                        .addOnSuccessListener {
+                            // Log the activity
+                            val currentUser = auth.currentUser
+                            if (currentUser != null) {
+                                ActivityLog.logActivity(
+                                    userId = currentUser.uid,
+                                    userEmail = currentUser.email ?: "",
+                                    userType = "admin",
+                                    action = "Реєстрація поліцейського",
+                                    details = "Ім'я: $name, Email: $email, Відділ: $department"
+                                )
+                            }
 
-                        finish()
-                    }
-                    .addOnFailureListener { e ->
-                        setLoading(false)
-                        Toast.makeText(
-                            this,
-                            "Помилка створення профілю: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                            // Successfully created both
+                            setLoading(false)
+                            Toast.makeText(
+                                this,
+                                "Поліцейський $name успішно зареєстрований",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            // Re-authenticate as admin before leaving
+                            auth.signOut()
+
+                            finish()
+                        }
+                        .addOnFailureListener { e ->
+                            setLoading(false)
+                            Toast.makeText(
+                                this,
+                                "Помилка створення профілю: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                }
             }
-        }
-        .addOnFailureListener { e ->
-            setLoading(false)
-            Toast.makeText(
-                this,
-                "Помилка створення авторизації: ${e.message}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-}
+            .addOnFailureListener { e ->
+                setLoading(false)
+                Toast.makeText(
+                    this,
+                    "Помилка створення авторизації: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+    }
 
 
     private fun setLoading(isLoading: Boolean) {
