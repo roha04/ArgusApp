@@ -49,4 +49,25 @@
     <color name="background_light">#F5F5F5</color>
 
     <color name="colorSuccess">#4CAF50</color>
+
+    <!-- Security Alert Colors -->
+    <color name="alert_new">#FF5722</color>
+    <color name="alert_investigating">#2196F3</color>
+    <color name="alert_resolved">#4CAF50</color>
+    <color name="alert_false_positive">#9E9E9E</color>
+
+    <color name="severity_critical">#D32F2F</color>
+    <color name="severity_high">#F57C00</color>
+    <color name="severity_medium">#FFC107</color>
+    <color name="severity_low">#4CAF50</color>
+    <color name="severity_info">#2196F3</color>
+
+    <color name="chip_background_critical">#FFD8D8</color>
+    <color name="chip_background_high">#FFECD8</color>
+    <color name="chip_background_medium">#FFF8D8</color>
+    <color name="chip_background_low">#D8FFD8</color>
+
+    <color name="divider">#DDDDDD</color>
+    <color name="divider_light">#EEEEEE</color>
+
 </resources>

@@ -15,7 +15,8 @@ import com.example.argusapp.ui.admin.adapters.UsersAdapter
 class UsersFragment : Fragment() {
 
     private var _binding: FragmentUsersBinding? = null
-    private val binding get() = _binding!!
+    // Use a safe binding accessor that doesn't throw NPE
+    private val binding get() = _binding
 
     private lateinit var usersAdapter: UsersAdapter
     private lateinit var db: FirebaseFirestore
@@ -28,7 +29,7 @@ class UsersFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentUsersBinding.inflate(inflater, container, false)
-        return binding.root
+        return _binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -41,15 +42,17 @@ class UsersFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        usersAdapter = UsersAdapter { user ->
-            // Обробка натискання на користувача, наприклад, перегляд деталей
-            Toast.makeText(context, "Вибрано: ${user.displayName}", Toast.LENGTH_SHORT).show()
-        }
+        binding?.let { safeBinding ->
+            usersAdapter = UsersAdapter { user ->
+                // Обробка натискання на користувача, наприклад, перегляд деталей
+                Toast.makeText(context, "Вибрано: ${user.displayName}", Toast.LENGTH_SHORT).show()
+            }
 
-        binding.recyclerViewUsers.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = usersAdapter
-            setHasFixedSize(true)
+            safeBinding.recyclerViewUsers.apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = usersAdapter
+                setHasFixedSize(true)
+            }
         }
     }
 
@@ -63,43 +66,55 @@ class UsersFragment : Fragment() {
 
         query.get()
             .addOnSuccessListener { documents ->
-                showLoading(false)
+                // Check if fragment is still attached to avoid crashes
+                if (isAdded && _binding != null) {
+                    showLoading(false)
 
-                usersList = documents.mapNotNull { doc ->
-                    try {
-                        val user = doc.toObject(User::class.java)
-                        user.id = doc.id
-                        user
-                    } catch (e: Exception) {
-                        null
+                    usersList = documents.mapNotNull { doc ->
+                        try {
+                            val user = doc.toObject(User::class.java)
+                            user.id = doc.id
+                            user
+                        } catch (e: Exception) {
+                            null
+                        }
                     }
-                }
 
-                updateUI(usersList)
+                    updateUI(usersList)
+                }
             }
             .addOnFailureListener { e ->
-                showLoading(false)
-                showError("Помилка отримання даних: ${e.message}")
+                // Check if fragment is still attached to avoid crashes
+                if (isAdded && _binding != null) {
+                    showLoading(false)
+                    showError("Помилка отримання даних: ${e.message}")
+                }
             }
     }
 
     private fun updateUI(users: List<User>) {
-        if (users.isEmpty()) {
-            binding.textViewEmpty.visibility = View.VISIBLE
-            binding.recyclerViewUsers.visibility = View.GONE
-        } else {
-            binding.textViewEmpty.visibility = View.GONE
-            binding.recyclerViewUsers.visibility = View.VISIBLE
-            usersAdapter.submitList(users)
+        binding?.let { safeBinding ->
+            if (users.isEmpty()) {
+                safeBinding.textViewEmpty.visibility = View.VISIBLE
+                safeBinding.recyclerViewUsers.visibility = View.GONE
+            } else {
+                safeBinding.textViewEmpty.visibility = View.GONE
+                safeBinding.recyclerViewUsers.visibility = View.VISIBLE
+                usersAdapter.submitList(users)
+            }
         }
     }
 
     private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding?.let { safeBinding ->
+            safeBinding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
     }
 
     private fun showError(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        if (isAdded) {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     /**

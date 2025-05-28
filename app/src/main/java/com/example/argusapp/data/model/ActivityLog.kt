@@ -12,7 +12,13 @@ data class ActivityLog(
     var action: String = "",
     var details: String = "",
     var timestamp: Timestamp = Timestamp.now(),
-    var deviceInfo: String = ""
+    var deviceInfo: String = "",
+    var ipAddress: String = "",
+    var location: String = "",
+    var sessionId: String = "",
+    var isSuccessful: Boolean = true,
+    var resourceType: String = "", // "user", "report", "settings", etc.
+    var resourceId: String = ""    // ID of the accessed resource
 ) {
     companion object {
         // Helper function to log activity directly from the model
@@ -21,9 +27,15 @@ data class ActivityLog(
             userEmail: String,
             userType: String,
             action: String,
-            details: String = ""
+            details: String = "",
+            resourceType: String = "",
+            resourceId: String = "",
+            isSuccessful: Boolean = true
         ) {
             val deviceInfo = getDeviceInfo()
+            val ipAddress = getIPAddress()
+            val location = "Unknown" // Will be determined by Cloud Function
+            val sessionId = generateSessionId(userId)
 
             val activityLog = ActivityLog(
                 id = java.util.UUID.randomUUID().toString(),
@@ -33,7 +45,13 @@ data class ActivityLog(
                 action = action,
                 details = details,
                 timestamp = Timestamp.now(),
-                deviceInfo = deviceInfo
+                deviceInfo = deviceInfo,
+                ipAddress = ipAddress,
+                location = location,
+                sessionId = sessionId,
+                isSuccessful = isSuccessful,
+                resourceType = resourceType,
+                resourceId = resourceId
             )
 
             // Save to Firestore
@@ -60,6 +78,33 @@ data class ActivityLog(
             } catch (e: Exception) {
                 "Unknown Device"
             }
+        }
+
+        // Get IP address
+        private fun getIPAddress(): String {
+            return try {
+                val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+                while (interfaces.hasMoreElements()) {
+                    val networkInterface = interfaces.nextElement()
+                    val addresses = networkInterface.inetAddresses
+
+                    while (addresses.hasMoreElements()) {
+                        val address = addresses.nextElement()
+                        if (!address.isLoopbackAddress && address is java.net.Inet4Address) {
+                            return address.hostAddress
+                        }
+                    }
+                }
+                "Unknown"
+            } catch (e: Exception) {
+                "Unknown"
+            }
+        }
+
+        // Generate a session ID
+        private fun generateSessionId(userId: String): String {
+            val timestamp = System.currentTimeMillis()
+            return "$userId-$timestamp"
         }
 
         // Translate role to human-readable format
