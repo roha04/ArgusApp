@@ -86,6 +86,8 @@ dependencies {
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.firebase.functions.ktx)
+    implementation(libs.firebase.messaging.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -102,6 +104,8 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("org.osmdroid:osmdroid-android:6.1.14")
     implementation("com.google.android.gms:play-services-base:18.2.0")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity:17.0.1")
+    implementation("com.google.firebase:firebase-appcheck-debug:17.0.1")
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
 

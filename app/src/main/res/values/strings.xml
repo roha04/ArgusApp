@@ -6,4 +6,7 @@
     <!-- Image handling related strings -->
     <string name="image_preview">Перегляд зображення</string>
     <string name="remove_image">Видалити зображення</string>
+
+    <!-- res/values/strings.xml -->
+    <string name="default_notification_channel_id">general_notifications</string>
 </resources>

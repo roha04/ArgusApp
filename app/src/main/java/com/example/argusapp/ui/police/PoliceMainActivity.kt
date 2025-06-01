@@ -1,5 +1,6 @@
 package com.example.argusapp.ui.police
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -19,6 +20,7 @@ import com.example.argusapp.ui.police.fragments.NewReportsFragment
 import com.example.argusapp.ui.police.fragments.PoliceProfileFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 
 class PoliceMainActivity : AppCompatActivity() {
 
@@ -40,6 +42,8 @@ class PoliceMainActivity : AppCompatActivity() {
 
         // Test reports query for debugging
         testReportsQuery()
+        subscribeToTopics()
+
     }
 
     private fun setupNavigation() {
@@ -101,6 +105,38 @@ class PoliceMainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Ні", null)
             .show()
+    }
+    private fun subscribeToTopics() {
+        // Subscribe to general topic
+        FirebaseMessaging.getInstance().subscribeToTopic("all")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Subscribed to 'all' topic")
+                } else {
+                    Log.e(TAG, "Failed to subscribe to 'all' topic", task.exception)
+                }
+            }
+
+        // Subscribe to police-specific topic
+        FirebaseMessaging.getInstance().subscribeToTopic("user_type_police")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Subscribed to 'user_type_police' topic")
+                } else {
+                    Log.e(TAG, "Failed to subscribe to 'user_type_police' topic", task.exception)
+                }
+            }
+
+        // Add debug log for token
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    Log.d(TAG, "FCM Token: $token")
+                } else {
+                    Log.e(TAG, "Failed to get FCM token", task.exception)
+                }
+            }
     }
 
     private inner class ViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {

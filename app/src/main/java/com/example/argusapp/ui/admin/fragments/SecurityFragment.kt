@@ -28,7 +28,7 @@ class SecurityFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Set up ViewPager with tabs
-        val tabTitles = arrayOf("Журнал активності", "Сповіщення безпеки")
+        val tabTitles = arrayOf("Журнал активності", "Сповіщення безпеки", "Масові повідомлення")
 
         binding.viewPager.adapter = SecurityPagerAdapter(this)
 
@@ -43,12 +43,13 @@ class SecurityFragment : Fragment() {
     }
 
     private inner class SecurityPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = 3  // Updated to 3 tabs
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> ActivityLogsFragment()
                 1 -> SecurityAlertsFragment()
+                2 -> MassMessagingFragment()
                 else -> ActivityLogsFragment()
             }
         }

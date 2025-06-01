@@ -1,8 +1,13 @@
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { defineString } = require("firebase-functions/params");
+// Import Firebase Admin
+const admin = require('firebase-admin');
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+
+// Import Firebase Functions v2
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall } = require("firebase-functions/v2/https");
+const { defineString } = require("firebase-functions/params");
 
 // Initialize Firebase
 initializeApp();
@@ -191,4 +196,119 @@ exports.dailySecurityAnalysis = onSchedule({
   });
 
   return Promise.all(promises);
+});
+
+// Mass messaging function - SIMPLIFIED VERSION
+exports.sendMassMessage = onCall({
+  enforceAppCheck: false
+}, async (request) => {
+  try {
+    console.log("sendMassMessage function called");
+
+    // Check authentication
+    if (!request.auth) {
+      console.log("Error: User not authenticated");
+      throw new Error('User must be authenticated to send mass messages');
+    }
+
+    // Get the user's role from Firestore
+    const userDoc = await db.collection('users').doc(request.auth.uid).get();
+    if (!userDoc.exists || userDoc.data().role !== 'admin') {
+      console.log("Permission error: User is not an admin");
+      throw new Error('Only administrators can send mass messages');
+    }
+
+    // Get message data
+    const { title, body, topic = "all", userType = "all" } = request.data;
+
+    if (!title || !body) {
+      console.log("Error: Missing title or body");
+      throw new Error('Title and body are required');
+    }
+
+    console.log("Message data:", { title, body, topic, userType });
+
+    // Prepare the message
+    const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: {
+        // We don't have a messageId since we're skipping Firestore
+        clickAction: 'OPEN_NOTIFICATION_ACTIVITY',
+        type: 'mass_message'
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          priority: 'high',
+          channelId: 'general_notifications'
+        }
+      },
+    };
+
+    // Determine target based on userType
+    let targetTopic;
+    if (userType && userType !== 'all') {
+      // Send to specific user type (admin, police, citizen)
+      targetTopic = `user_type_${userType}`;
+    } else if (topic && topic !== 'all') {
+      // Send to specific topic
+      targetTopic = topic;
+    } else {
+      // Send to all users
+      targetTopic = 'all_users';
+    }
+
+    message.topic = targetTopic;
+    console.log(`Sending message to topic: ${targetTopic}`);
+
+    // Send the message
+    console.log("Sending FCM message");
+    const response = await admin.messaging().send(message);
+    console.log(`FCM message sent successfully: ${response}`);
+
+    return {
+      success: true,
+      fcmResponse: response
+    };
+  } catch (error) {
+    console.error('Error sending mass message:', error);
+    throw new Error(`Failed to send message: ${error.message}`);
+  }
+});
+exports.logMessageHistory = onCall({
+  enforceAppCheck: false
+}, async (request) => {
+  try {
+    // Authentication check
+    if (!request.auth) {
+      throw new Error('User must be authenticated');
+    }
+
+    const { title, body, topic, userType, fcmResponse } = request.data;
+
+    // Log the message
+    const messageDoc = await db.collection('mass_messages').add({
+      title,
+      body,
+      sentBy: request.auth.uid,
+      senderEmail: request.auth.token.email || 'Unknown',
+      sentAt: admin.firestore.FieldValue.serverTimestamp(),
+      targetTopic: topic || 'all',
+      targetUserType: userType || 'all',
+      deliveryStatus: 'sent',
+      fcmResponse
+    });
+
+    return {
+      success: true,
+      messageId: messageDoc.id
+    };
+  } catch (error) {
+    console.error('Error logging message history:', error);
+    throw new Error(`Failed to log message history: ${error.message}`);
+  }
 });
