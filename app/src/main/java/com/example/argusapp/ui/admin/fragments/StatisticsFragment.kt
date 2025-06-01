@@ -14,7 +14,8 @@ import java.util.Calendar
 class StatisticsFragment : Fragment() {
 
     private var _binding: FragmentStatisticsBinding? = null
-    private val binding get() = _binding!!
+    // Change this line to use safe call operator
+    private val binding get() = _binding
 
     private lateinit var db: FirebaseFirestore
 
@@ -22,9 +23,9 @@ class StatisticsFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ): View? {
         _binding = FragmentStatisticsBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -58,6 +59,9 @@ class StatisticsFragment : Fragment() {
     private fun loadUserStatistics() {
         db.collection("users").get()
             .addOnSuccessListener { documents ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnSuccessListener
+
                 var totalCount = 0
                 var citizenCount = 0
                 var policeCount = 0
@@ -73,14 +77,17 @@ class StatisticsFragment : Fragment() {
                     }
                 }
 
-                binding.textViewTotalUsers.text = totalCount.toString()
-                binding.textViewCitizenCount.text = citizenCount.toString()
-                binding.textViewPoliceCount.text = policeCount.toString()
-                binding.textViewAdminCount.text = adminCount.toString()
+                binding?.textViewTotalUsers?.text = totalCount.toString()
+                binding?.textViewCitizenCount?.text = citizenCount.toString()
+                binding?.textViewPoliceCount?.text = policeCount.toString()
+                binding?.textViewAdminCount?.text = adminCount.toString()
 
                 showLoading(false)
             }
             .addOnFailureListener { e ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnFailureListener
+
                 showError("Помилка завантаження статистики користувачів: ${e.message}")
                 showLoading(false)
             }
@@ -89,6 +96,9 @@ class StatisticsFragment : Fragment() {
     private fun loadReportStatistics() {
         db.collection("reports").get()
             .addOnSuccessListener { documents ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnSuccessListener
+
                 var totalCount = 0
                 var newCount = 0
                 var inProgressCount = 0
@@ -104,12 +114,15 @@ class StatisticsFragment : Fragment() {
                     }
                 }
 
-                binding.textViewTotalReports.text = totalCount.toString()
-                binding.textViewNewReports.text = newCount.toString()
-                binding.textViewInProgressReports.text = inProgressCount.toString()
-                binding.textViewResolvedReports.text = resolvedCount.toString()
+                binding?.textViewTotalReports?.text = totalCount.toString()
+                binding?.textViewNewReports?.text = newCount.toString()
+                binding?.textViewInProgressReports?.text = inProgressCount.toString()
+                binding?.textViewResolvedReports?.text = resolvedCount.toString()
             }
             .addOnFailureListener { e ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnFailureListener
+
                 showError("Помилка завантаження статистики заявок: ${e.message}")
             }
     }
@@ -120,9 +133,15 @@ class StatisticsFragment : Fragment() {
             .whereGreaterThanOrEqualTo("createdAt", startOfDay)
             .get()
             .addOnSuccessListener { documents ->
-                binding.textViewTodayReports.text = documents.size().toString()
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnSuccessListener
+
+                binding?.textViewTodayReports?.text = documents.size().toString()
             }
             .addOnFailureListener { e ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnFailureListener
+
                 showError("Помилка завантаження статистики активності: ${e.message}")
             }
 
@@ -131,18 +150,27 @@ class StatisticsFragment : Fragment() {
             .whereGreaterThanOrEqualTo("createdAt", startOfDay)
             .get()
             .addOnSuccessListener { documents ->
-                binding.textViewTodayRegistrations.text = documents.size().toString()
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnSuccessListener
+
+                binding?.textViewTodayRegistrations?.text = documents.size().toString()
             }
             .addOnFailureListener { e ->
+                // Check if fragment is still attached and binding is not null
+                if (!isAdded || binding == null) return@addOnFailureListener
+
                 showError("Помилка завантаження статистики активності: ${e.message}")
             }
     }
 
     private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        // Use safe call operator
+        binding?.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
     private fun showError(message: String) {
+        // Check if fragment is still attached
+        if (!isAdded) return
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
