@@ -8,10 +8,11 @@
         android:id="@+id/nav_reports"
         android:icon="@drawable/ic_reports"
         android:title="Заявки" />
+    <!-- Removed Statistics to make room for Departments -->
     <item
-        android:id="@+id/nav_statistics"
-        android:icon="@drawable/ic_statistics"
-        android:title="Статистика" />
+        android:id="@+id/navigation_departments"
+        android:icon="@drawable/ic_departments"
+        android:title="Відділи" />
     <item
         android:id="@+id/nav_security"
         android:icon="@drawable/ic_security_alert"

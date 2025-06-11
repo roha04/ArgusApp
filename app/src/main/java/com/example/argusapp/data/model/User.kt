@@ -14,6 +14,8 @@ data class User(
     var phone: String = "",
     var createdAt: Timestamp = Timestamp.now(),
 
+    // Add this property to your User class
+    @get:Exclude var isSelected: Boolean = false,
     // Поля для поліцейських
     var badgeNumber: String = "",
     var department: String = "",
@@ -25,6 +27,8 @@ data class User(
     @get:PropertyName("isActive")
     @set:PropertyName("isActive")
     var isActive: Boolean = true
+
+
 ) {
     // Метод для перевірки ролі
     fun hasRole(requiredRole: String): Boolean {

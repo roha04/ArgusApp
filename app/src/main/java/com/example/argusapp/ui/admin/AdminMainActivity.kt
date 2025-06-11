@@ -73,7 +73,7 @@ class AdminMainActivity : AppCompatActivity() {
                     binding.viewPager.currentItem = 1
                     true
                 }
-                R.id.nav_statistics -> {
+                R.id.navigation_departments -> {
                     binding.viewPager.currentItem = 2
                     true
                 }
@@ -142,7 +142,7 @@ class AdminMainActivity : AppCompatActivity() {
     }
 
     private inner class ViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
-        override fun getItemCount(): Int = 5  // Changed back to 5 fragments
+        override fun getItemCount(): Int = 5  // 5 fragments total
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
@@ -152,8 +152,8 @@ class AdminMainActivity : AppCompatActivity() {
                     usersFragment!!
                 }
                 1 -> ReportsFragment()
-                2 -> StatisticsFragment()
-                3 -> SecurityFragment()  // New combined security fragment
+                2 -> DepartmentsFragment()  // Changed from StatisticsFragment to DepartmentsFragment
+                3 -> SecurityFragment()
                 4 -> ProfileFragment()
                 else -> UsersFragment()
             }

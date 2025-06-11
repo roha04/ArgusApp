@@ -24,6 +24,7 @@
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 
     <style name="Widget.MaterialComponents.Chip.Info" parent="Widget.MaterialComponents.Chip.Action">
@@ -39,5 +40,10 @@
 
     <style name="RoundedDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="android:windowBackground">@drawable/dialog_rounded_background</item>
+    </style>
+    <!-- Base application theme. -->
+    <style name="Base.Theme.ArgusApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 </resources>

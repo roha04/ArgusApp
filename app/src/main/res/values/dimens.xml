@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chat dimensions -->
+    <dimen name="message_margin_start_sent">64dp</dimen>
+    <dimen name="message_margin_end_sent">8dp</dimen>
+    <dimen name="message_margin_start_received">8dp</dimen>
+    <dimen name="message_margin_end_received">64dp</dimen>
+    <dimen name="message_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+</resources>
