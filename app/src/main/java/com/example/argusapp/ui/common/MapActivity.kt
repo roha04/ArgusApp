@@ -21,12 +21,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Overlay
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -39,9 +36,10 @@ class MapActivity : AppCompatActivity() {
     private lateinit var locationHelper: LocationHelper
 
     private val reports = mutableListOf<Report>()
-    private val markers = mutableMapOf<String, Marker>()
-    private val overlays = mutableMapOf<String, Overlay>()
+    private val allMarkers = mutableMapOf<String, Marker>()
+    private var currentLocationMarker: Marker? = null
 
+    // Filter states - only 3 statuses
     private var showNew = true
     private var showInProgress = true
     private var showResolved = true
@@ -52,6 +50,7 @@ class MapActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MapActivity", "=== onCreate started ===")
 
         // OSMDroid configuration
         val ctx = applicationContext
@@ -85,6 +84,8 @@ class MapActivity : AppCompatActivity() {
 
         // Setup filter chips
         setupFilterChips()
+
+        Log.d("MapActivity", "=== onCreate completed ===")
     }
 
     private fun checkPermissions() {
@@ -98,7 +99,6 @@ class MapActivity : AppCompatActivity() {
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        // For API < 30, OSMDroid needs write storage permission
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) {
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -119,19 +119,17 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun setupMap() {
+        Log.d("MapActivity", "Setting up map...")
         mapView = binding.mapView
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
 
-        // Add zoom controls
         val mapController = mapView.controller
         mapController.setZoom(12.0)
 
-        // Set center to Kyiv by default
         val kyivPoint = GeoPoint(50.4501, 30.5234)
         mapController.setCenter(kyivPoint)
 
-        // Get current location and center map
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -140,7 +138,6 @@ class MapActivity : AppCompatActivity() {
             getAndShowCurrentLocation()
         }
 
-        // Load reports from Firestore
         loadReports()
     }
 
@@ -150,19 +147,22 @@ class MapActivity : AppCompatActivity() {
                 val geoPoint = GeoPoint(location.latitude, location.longitude)
                 mapView.controller.animateTo(geoPoint)
 
-                // Add a marker for current location
+                currentLocationMarker?.let { marker ->
+                    mapView.overlays.remove(marker)
+                }
+
                 val marker = Marker(mapView)
                 marker.position = geoPoint
                 marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 marker.title = "Моє місцезнаходження"
 
-                // Use a different icon for current location
                 val icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_my_location, null)
                 if (icon != null) {
                     marker.icon = icon
                 }
 
                 mapView.overlays.add(marker)
+                currentLocationMarker = marker
                 mapView.invalidate()
             },
             onError = { errorMessage ->
@@ -173,62 +173,137 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun setupFilterChips() {
-        binding.chipNew.setOnCheckedChangeListener { _, isChecked ->
-            showNew = isChecked
-            updateMarkers()
-        }
+        Log.d("MapActivity", "=== Setting up filter chips ===")
 
-        binding.chipInProgress.setOnCheckedChangeListener { _, isChecked ->
-            showInProgress = isChecked
-            updateMarkers()
-        }
+        try {
+            Log.d("MapActivity", "chipNew found: ${binding.chipNew != null}")
+            Log.d("MapActivity", "chipInProgress found: ${binding.chipInProgress != null}")
+            Log.d("MapActivity", "chipCompleted found: ${binding.chipCompleted != null}")
 
-        binding.chipResolved.setOnCheckedChangeListener { _, isChecked ->
-            showResolved = isChecked
-            updateMarkers()
+            // Force all chips to be checked initially
+            binding.chipNew.isChecked = true
+            binding.chipInProgress.isChecked = true
+            binding.chipCompleted.isChecked = true
+
+            // Make chips visible
+            binding.chipNew.visibility = View.VISIBLE
+            binding.chipInProgress.visibility = View.VISIBLE
+            binding.chipCompleted.visibility = View.VISIBLE
+
+            Log.d("MapActivity", "All chips set to visible and checked")
+
+            // Sync variables
+            showNew = binding.chipNew.isChecked
+            showInProgress = binding.chipInProgress.isChecked
+            showResolved = binding.chipCompleted.isChecked
+
+            Log.d("MapActivity", "Initial states - showNew: $showNew, showInProgress: $showInProgress, showResolved: $showResolved")
+
+            // Set up listeners for 3 chips
+            binding.chipNew.setOnCheckedChangeListener { _, isChecked ->
+                Log.d("MapActivity", "=== chipNew clicked: $isChecked ===")
+                showNew = isChecked
+
+                // Prevent all filters from being unchecked
+                if (!showNew && !showInProgress && !showResolved) {
+                    Log.d("MapActivity", "Preventing all filters from being unchecked")
+                    binding.chipNew.isChecked = true
+                    showNew = true
+                    Toast.makeText(this, "Принаймні один фільтр має бути активним", Toast.LENGTH_SHORT).show()
+                    return@setOnCheckedChangeListener
+                }
+
+                Log.d("MapActivity", "showNew updated to: $showNew")
+                updateMarkersVisibility()
+            }
+
+            binding.chipInProgress.setOnCheckedChangeListener { _, isChecked ->
+                Log.d("MapActivity", "=== chipInProgress clicked: $isChecked ===")
+                showInProgress = isChecked
+
+                // Prevent all filters from being unchecked
+                if (!showNew && !showInProgress && !showResolved) {
+                    Log.d("MapActivity", "Preventing all filters from being unchecked")
+                    binding.chipInProgress.isChecked = true
+                    showInProgress = true
+                    Toast.makeText(this, "Принаймні один фільтр має бути активним", Toast.LENGTH_SHORT).show()
+                    return@setOnCheckedChangeListener
+                }
+
+                Log.d("MapActivity", "showInProgress updated to: $showInProgress")
+                updateMarkersVisibility()
+            }
+
+            binding.chipCompleted.setOnCheckedChangeListener { _, isChecked ->
+                Log.d("MapActivity", "=== chipCompleted clicked: $isChecked ===")
+                showResolved = isChecked
+
+                // Prevent all filters from being unchecked
+                if (!showNew && !showInProgress && !showResolved) {
+                    Log.d("MapActivity", "Preventing all filters from being unchecked")
+                    binding.chipCompleted.isChecked = true
+                    showResolved = true
+                    Toast.makeText(this, "Принаймні один фільтр має бути активним", Toast.LENGTH_SHORT).show()
+                    return@setOnCheckedChangeListener
+                }
+
+                Log.d("MapActivity", "showResolved updated to: $showResolved")
+                updateMarkersVisibility()
+            }
+
+            Log.d("MapActivity", "=== Filter chips setup completed ===")
+
+        } catch (e: Exception) {
+            Log.e("MapActivity", "Error setting up chips: ${e.message}")
+            e.printStackTrace()
         }
     }
 
     private fun loadReports() {
+        Log.d("MapActivity", "=== Loading reports ===")
         binding.progressBar.visibility = View.VISIBLE
         reports.clear()
 
-        // Try loading all reports first
         db.collection("reports")
             .get()
             .addOnSuccessListener { documents ->
                 binding.progressBar.visibility = View.GONE
-                Log.d("MapActivity", "Loaded ${documents.size()} reports")
+                Log.d("MapActivity", "Loaded ${documents.size()} reports from Firestore")
 
-                // Check if we're in police mode
                 val isPoliceMode = intent.getBooleanExtra("IS_POLICE_MODE", false)
+                Log.d("MapActivity", "Police mode: $isPoliceMode")
 
+                var addedCount = 0
                 for (document in documents) {
                     try {
                         val report = document.toObject(Report::class.java)
                         report.id = document.id
 
-                        // Apply filtering based on role
                         val shouldAdd = if (isPoliceMode) {
-                            // For police, only show assigned reports
                             report.assignedToId == userId
                         } else {
-                            // For others, show all reports
                             true
                         }
 
                         if (shouldAdd) {
                             reports.add(report)
-                            Log.d("MapActivity", "Added report: ${report.id}, title: ${report.title}, " +
-                                    "lat: ${report.latitude}, lng: ${report.longitude}")
+                            addedCount++
+                            Log.d("MapActivity", "Report ${addedCount}: ID=${report.id}, status=${report.status}, title=${report.title}")
                         }
                     } catch (e: Exception) {
                         Log.e("MapActivity", "Error parsing report: ${e.message}")
                     }
                 }
 
-                // Add markers for reports
-                addMarkersToMap()
+                Log.d("MapActivity", "Added $addedCount reports to list")
+
+                // Count reports by status
+                val statusCounts = reports.groupBy { it.status }.mapValues { it.value.size }
+                Log.d("MapActivity", "Report status counts: $statusCounts")
+
+                debugReports()
+                createAllMarkers()
+                updateMarkersVisibility()
             }
             .addOnFailureListener { e ->
                 binding.progressBar.visibility = View.GONE
@@ -237,102 +312,150 @@ class MapActivity : AppCompatActivity() {
             }
     }
 
-    private fun addMarkersToMap() {
-        // Clear existing markers
-        val overlaysToRemove = overlays.values.toList()
-        for (overlay in overlaysToRemove) {
-            mapView.overlays.remove(overlay)
+    private fun debugReports() {
+        Log.d("MapActivity", "=== DEBUG: All loaded reports ===")
+        for ((index, report) in reports.withIndex()) {
+            Log.d("MapActivity", "Report $index:")
+            Log.d("MapActivity", "  ID: ${report.id}")
+            Log.d("MapActivity", "  Title: ${report.title}")
+            Log.d("MapActivity", "  Status: ${report.status}")
+            Log.d("MapActivity", "  Location (GeoPoint): ${report.location}")
+            Log.d("MapActivity", "  Latitude (property): ${report.latitude}")
+            Log.d("MapActivity", "  Longitude (property): ${report.longitude}")
+            Log.d("MapActivity", "  Address: ${report.address}")
+            Log.d("MapActivity", "  HasLocation(): ${report.hasLocation()}")
+            Log.d("MapActivity", "  ---")
         }
-        markers.clear()
-        overlays.clear()
+        Log.d("MapActivity", "=== END DEBUG ===")
+    }
+
+    private fun createAllMarkers() {
+        Log.d("MapActivity", "=== Creating all markers ===")
+        allMarkers.clear()
 
         if (reports.isEmpty()) {
-            Log.d("MapActivity", "No reports to display on map")
-            Toast.makeText(this, "Немає звітів для відображення", Toast.LENGTH_SHORT).show()
+            Log.d("MapActivity", "No reports to create markers for")
             return
         }
 
-        // Collect visible points for calculating bounds
-        val visiblePoints = mutableListOf<GeoPoint>()
-
-        // Add new markers
+        var createdCount = 0
         for (report in reports) {
-            // Use latitude/longitude fields directly
-            if (report.latitude == null || report.longitude == null) {
-                Log.d("MapActivity", "Report ${report.id} has no lat/lng")
+            // Try to get coordinates from different possible sources
+            val lat: Double?
+            val lng: Double?
+
+            when {
+                // First try: use location GeoPoint (new format)
+                report.location != null -> {
+                    lat = report.location!!.latitude
+                    lng = report.location!!.longitude
+                    Log.d("MapActivity", "Report ${report.id} using GeoPoint location: $lat, $lng")
+                }
+                // Second try: use separate latitude/longitude fields (old format)
+                report.latitude != null && report.longitude != null -> {
+                    lat = report.latitude
+                    lng = report.longitude
+                    Log.d("MapActivity", "Report ${report.id} using separate lat/lng: $lat, $lng")
+                }
+                // No location data available
+                else -> {
+                    Log.d("MapActivity", "Report ${report.id} has no location data")
+                    continue
+                }
+            }
+
+            // Validate coordinates
+            if (lat == null || lng == null || lat == 0.0 && lng == 0.0) {
+                Log.d("MapActivity", "Report ${report.id} has invalid coordinates: lat=$lat, lng=$lng")
                 continue
             }
 
-            val geoPoint = GeoPoint(report.latitude!!, report.longitude!!)
-            Log.d("MapActivity", "Creating marker for report ${report.id} at ${report.latitude}, ${report.longitude}")
+            val geoPoint = GeoPoint(lat, lng)
+            val marker = createMarker(report, geoPoint)
+            allMarkers[report.id] = marker
+            createdCount++
 
-            // Check if this marker should be visible based on filters
+            Log.d("MapActivity", "Created marker $createdCount for report ${report.id} with status: ${report.status} at coordinates: $lat, $lng")
+        }
+
+        Log.d("MapActivity", "Created $createdCount markers total")
+    }
+
+    private fun updateMarkersVisibility() {
+        Log.d("MapActivity", "=== Updating markers visibility ===")
+        Log.d("MapActivity", "Filter states - showNew: $showNew, showInProgress: $showInProgress, showResolved: $showResolved")
+
+        // Clear all report markers from map (keep current location marker)
+        val overlaysToRemove = mapView.overlays.filter { overlay ->
+            overlay != currentLocationMarker
+        }
+        mapView.overlays.removeAll(overlaysToRemove)
+        Log.d("MapActivity", "Removed ${overlaysToRemove.size} overlays from map")
+
+        var visibleCount = 0
+
+        // Add markers that should be visible based on filters
+        for (report in reports) {
+            val marker = allMarkers[report.id] ?: continue
+
             val isVisible = when (report.status) {
-                "new" -> showNew
-                "in_progress" -> showInProgress
-                "resolved" -> showResolved
-                else -> true
+                "new" -> {
+                    Log.d("MapActivity", "Report ${report.id} is 'new', showNew=$showNew")
+                    showNew
+                }
+                "in_progress" -> {
+                    Log.d("MapActivity", "Report ${report.id} is 'in_progress', showInProgress=$showInProgress")
+                    showInProgress
+                }
+                "completed", "resolved" -> {
+                    Log.d("MapActivity", "Report ${report.id} is 'completed/resolved', showResolved=$showResolved")
+                    showResolved
+                }
+                else -> {
+                    Log.d("MapActivity", "Report ${report.id} has unknown status '${report.status}', showing by default")
+                    true
+                }
             }
 
             if (isVisible) {
-                val marker = createMarker(report, geoPoint)
-                markers[report.id] = marker
                 mapView.overlays.add(marker)
-                overlays[report.id] = marker
-
-                // Add to visible points
-                visiblePoints.add(geoPoint)
-            }
-        }
-
-        // Zoom to show all markers if we have any
-        if (visiblePoints.isNotEmpty()) {
-            Log.d("MapActivity", "Zooming to ${visiblePoints.size} visible points")
-
-            // Use OSMDroid's utility to create a bounding box from points
-            if (visiblePoints.size == 1) {
-                // If only one point, center on it
-                mapView.controller.animateTo(visiblePoints[0])
-                mapView.controller.setZoom(16.0)
+                visibleCount++
+                Log.d("MapActivity", "Added marker for report ${report.id} to map")
             } else {
-                // For multiple points, calculate bounds
-                val boundingBox = BoundingBox.fromGeoPoints(visiblePoints)
-                // Add padding around the bounding box
-                mapView.zoomToBoundingBox(boundingBox, true, 100)
+                Log.d("MapActivity", "Skipped marker for report ${report.id} (filtered out)")
             }
-        } else {
-            Log.d("MapActivity", "No visible points to zoom to")
         }
 
+        Log.d("MapActivity", "Showing $visibleCount markers out of ${allMarkers.size} total")
+
+        // Don't zoom - just refresh the map
         mapView.invalidate()
+        Log.d("MapActivity", "=== Markers visibility update completed ===")
     }
 
     private fun createMarker(report: Report, geoPoint: GeoPoint): Marker {
         val marker = Marker(mapView)
         marker.position = geoPoint
 
-        // Set title with category and urgency info
         val categoryName = getCategoryDisplayName(report.category)
         val urgencyName = getUrgencyDisplayName(report.urgency)
         marker.title = report.title
 
-        // Create a more informative snippet
         val snippetBuilder = StringBuilder()
         snippetBuilder.append("Категорія: $categoryName\n")
         snippetBuilder.append("Терміновість: $urgencyName\n")
 
-        // Add status with date
         val statusText = when (report.status) {
             "new" -> "Новий"
             "in_progress" -> "В обробці"
-            "resolved" -> "Вирішений"
+            "completed", "resolved" -> "Завершений"
             else -> report.status
         }
 
         val statusDate = when (report.status) {
             "new" -> report.createdAt
             "in_progress" -> report.assignedAt
-            "resolved" -> report.resolvedAt
+            "completed", "resolved" -> report.resolvedAt
             else -> null
         }
 
@@ -342,31 +465,29 @@ class MapActivity : AppCompatActivity() {
             snippetBuilder.append("Статус: $statusText\n")
         }
 
-        // Add address if available
-        if (report.address.isNotEmpty()) {
+        if (report.hasAddress()) {
             snippetBuilder.append("Адреса: ${report.address}")
         }
 
         marker.snippet = snippetBuilder.toString()
 
-        // Set icon based on status and urgency
+        // Correct icon mapping based on status
         val iconResId = when {
             report.status == "new" && report.urgency == "high" -> R.drawable.ic_marker_new_urgent
-            report.status == "new" -> R.drawable.ic_marker_new
-            report.status == "in_progress" -> R.drawable.ic_marker_in_progress
-            report.status == "resolved" -> R.drawable.ic_marker_resolved
+            report.status == "new" -> R.drawable.ic_marker_new  // Should be BLUE
+            report.status == "in_progress" -> R.drawable.ic_marker_in_progress  // Should be YELLOW
+            report.status == "completed" || report.status == "resolved" -> R.drawable.ic_marker_resolved  // Should be GREEN
             else -> R.drawable.ic_marker_new
         }
 
-        // Create or find the drawable
+        Log.d("MapActivity", "Report ${report.id} status='${report.status}' -> using icon: $iconResId")
+
         val icon = ResourcesCompat.getDrawable(resources, iconResId, null)
         if (icon != null) {
             marker.icon = icon
         }
 
-        // Set behavior for info window click
         marker.setOnMarkerClickListener { m, _ ->
-            // Open report details
             val intent = Intent(this, PoliceReportDetailActivity::class.java)
             intent.putExtra("REPORT_ID", report.id)
             startActivity(intent)
@@ -394,29 +515,6 @@ class MapActivity : AppCompatActivity() {
             "low" -> "Низький"
             else -> "Невизначений"
         }
-    }
-
-    private fun updateMarkers() {
-        for (report in reports) {
-            val overlay = overlays[report.id] ?: continue
-
-            val isVisible = when (report.status) {
-                "new" -> showNew
-                "in_progress" -> showInProgress
-                "resolved" -> showResolved
-                else -> true
-            }
-
-            if (isVisible) {
-                if (!mapView.overlays.contains(overlay)) {
-                    mapView.overlays.add(overlay)
-                }
-            } else {
-                mapView.overlays.remove(overlay)
-            }
-        }
-
-        mapView.invalidate()
     }
 
     override fun onRequestPermissionsResult(

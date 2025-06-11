@@ -5,6 +5,7 @@
     android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -23,40 +24,58 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroupFilters"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="16dp"
-        app:singleSelection="false"
+    <!-- Fixed positioning: Use FrameLayout with proper margins -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipNew"
+        <!-- Filter chips positioned in top-right corner -->
+        <LinearLayout
+            android:id="@+id/filterContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Нові"
-            app:chipBackgroundColor="@color/status_new" />
+            android:layout_gravity="top|end"
+            android:layout_margin="16dp"
+            android:background="@drawable/chip_group_background"
+            android:orientation="vertical"
+            android:padding="8dp">
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipInProgress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="В обробці"
-            app:chipBackgroundColor="@color/status_in_progress" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipNew"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:checked="true"
+                android:text="Нові"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="@color/status_new" />
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipResolved"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Вирішені"
-            app:chipBackgroundColor="@color/status_resolved" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipInProgress"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:checked="true"
+                android:text="В обробці"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="@color/status_in_progress" />
 
-    </com.google.android.material.chip.ChipGroup>
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCompleted"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Завершені"
+                android:textColor="@android:color/white"
+                app:chipBackgroundColor="@color/status_resolved" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"

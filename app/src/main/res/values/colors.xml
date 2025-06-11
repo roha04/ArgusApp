@@ -18,7 +18,6 @@
     <color name="police_role">#1976D2</color>     <!-- Blue -->
     <color name="citizen_role">#388E3C</color>    <!-- Green -->
 
-
     <!-- Кольори терміновості -->
     <color name="urgency_high">#F44336</color>
     <color name="urgency_medium">#FF9800</color>
@@ -31,8 +30,6 @@
     <!-- Кольори для коментарів -->
     <color name="official_comment_background">#E3F2FD</color>
 
-
-
     <!-- Кольори для фонів і категорій -->
     <color name="warning_background">#F57C00</color>
     <color name="category_background">#E0E0E0</color>
@@ -41,8 +38,6 @@
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorAccent">#FF4081</color>
     <color name="windowBackground">#F5F5F5</color>
-
-
 
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#757575</color>
@@ -69,5 +64,17 @@
 
     <color name="divider">#DDDDDD</color>
     <color name="divider_light">#EEEEEE</color>
+
+    <!-- Chip color selectors - CORRECTED -->
+    <color name="chip_selector_new">#FF2196F3</color>
+    <color name="chip_selector_in_progress">#FFFFB300</color>
+    <color name="chip_selector_resolved">#FF4CAF50</color>
+    <color name="chip_selector_closed">#FF9E9E9E</color>
+
+    <!-- Semi-transparent versions for unchecked state - CORRECTED -->
+    <color name="chip_unchecked_new">#802196F3</color>
+    <color name="chip_unchecked_in_progress">#80FFB300</color>
+    <color name="chip_unchecked_resolved">#804CAF50</color>
+    <color name="chip_unchecked_closed">#809E9E9E</color>
 
 </resources>
