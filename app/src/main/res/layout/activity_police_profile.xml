@@ -28,14 +28,30 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Profile Image -->
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/imageViewProfile"
+            <!-- Profile Image with Change Button -->
+            <FrameLayout
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                android:src="@drawable/ic_person_placeholder" />
+                android:layout_marginTop="16dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/imageViewProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_person_placeholder"
+                    app:civ_border_width="2dp"
+                    app:civ_border_color="#CCCCCC"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabChangePhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:src="@drawable/ic_edit"
+                    android:contentDescription="Змінити фото"
+                    app:fabSize="mini" />
+            </FrameLayout>
 
             <!-- View Mode Layout -->
             <LinearLayout
@@ -151,6 +167,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:text="Редагувати профіль" />
+
+                <!-- Додана кнопка виходу з облікового запису -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonLogout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Вийти з облікового запису"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:iconGravity="textStart" />
             </LinearLayout>
 
             <!-- Edit Mode Layout -->

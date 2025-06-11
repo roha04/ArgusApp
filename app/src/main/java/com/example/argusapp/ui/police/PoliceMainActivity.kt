@@ -43,7 +43,6 @@ class PoliceMainActivity : AppCompatActivity() {
         // Test reports query for debugging
         testReportsQuery()
         subscribeToTopics()
-
     }
 
     private fun setupNavigation() {
@@ -55,7 +54,12 @@ class PoliceMainActivity : AppCompatActivity() {
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 // Update bottom navigation when page changes
-                binding.bottomNavigation.menu.getItem(position).isChecked = true
+                when (position) {
+                    0 -> binding.bottomNavigation.selectedItemId = R.id.nav_new_reports
+                    1 -> binding.bottomNavigation.selectedItemId = R.id.nav_in_progress
+                    2 -> binding.bottomNavigation.selectedItemId = R.id.nav_completed
+                    3 -> binding.bottomNavigation.selectedItemId = R.id.nav_profile
+                }
             }
         })
 
@@ -106,6 +110,7 @@ class PoliceMainActivity : AppCompatActivity() {
             .setNegativeButton("Ні", null)
             .show()
     }
+
     private fun subscribeToTopics() {
         // Subscribe to general topic
         FirebaseMessaging.getInstance().subscribeToTopic("all")
@@ -140,7 +145,8 @@ class PoliceMainActivity : AppCompatActivity() {
     }
 
     private inner class ViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
-        override fun getItemCount(): Int = 4 // Only 4 pages in ViewPager (map is an activity)
+        // Повертаємо до 4 сторінок, оскільки профіль тепер знову є фрагментом
+        override fun getItemCount(): Int = 4
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
