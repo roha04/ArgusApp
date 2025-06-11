@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Feature declarations -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" /> <!-- Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CALL_PHONE" /> <!-- Add FCM-related permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -12,17 +27,34 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ArgusApp"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.admin.AssignOfficersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ArgusApp" />
+        <activity
+            android:name=".ui.admin.RegisterDepartmentActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ArgusApp" />
+        <activity
+            android:name=".ui.admin.DepartmentDetailActivity"
+            android:exported="false" />
 
-        <!-- Add Firebase Messaging Service -->
+        <activity
+            android:name=".ui.common.MapSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.admin.DepartmentMapActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.admin.SelectOfficerActivity"
+            android:exported="false" /> <!-- Add Firebase Messaging Service -->
         <service
             android:name=".services.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
-
-        <!-- Add FCM notification channel metadata -->
+        </service> <!-- Add FCM notification channel metadata -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="@string/default_notification_channel_id" />
@@ -76,9 +108,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Google Play Services version -->
+        </activity> <!-- Google Play Services version -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -87,17 +117,4 @@
             android:value="@string/default_notification_channel_id" />
     </application>
 
-    <!-- Feature declarations -->
-    <uses-feature android:name="android.hardware.telephony" android:required="false" />
-    <uses-feature android:name="android.hardware.location" android:required="false" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-
-    <!-- Add FCM-related permissions -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
