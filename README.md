@@ -52,7 +52,7 @@
 ##  Запуск проєкту
 
 1. Встановіть Android Studio
-2. Клонувати репозиторій:git clone https://github.com/your-username/crime-report-app.git
+2. Клонувати репозиторій:git clone https://github.com/roha04/ArgusApp.git
 3. Відкрити проєкт у Android Studio
 4. Підключити Firebase (через Firebase Assistant або вручну)
 5. Запустити застосунок на емуляторі або реальному пристрої
